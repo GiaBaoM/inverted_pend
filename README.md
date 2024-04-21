@@ -48,6 +48,8 @@ This project uses :
    
 ## Contact
 Github: https://github.com/GiaBaoM
+
 Email: maigiabao73@gmail.com
+
 Linkedin: https://www.linkedin.com/in/baomai73/
 
