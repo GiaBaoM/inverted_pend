@@ -45,36 +45,35 @@ void loop() {
      //control mode selection
     if(control_mode == balance_mode) {
       balance_control();
+      pwm_output = pend_output;
     }
     else if(control_mode == swingup_mode) {
       //swingup_control_PD();
-      pend_output = 0;
+      //pend_output = 0;
+      pwm_output = pend_output_swingup;
       //swingup_control_basic();
     }
     else if(control_mode == stop_mode) {
       //go_stop();
-      pend_output = 0;
+      pwm_output = 0;
     }
     else {
-      pend_output = 0;
+      pwm_output = 0;
     }
     // motor control
-    motor_control(pend_output);
+    //motor_control(pwm_output);
 
     //motor_control(60);
-     // print values for debugging
-    // Serial.print("pend_angle: ");
-    // Serial.print(pend_angle);
-    // Serial.print(",");
-    // Serial.print("cart_position: ");
-    // Serial.print(cart_position);
-    // Serial.print(",");
-    // Serial.print("pend_output: ");
-    // Serial.println(pend_output);
-    // Serial.print(",");
-    
-    // Serial.print("\n");
-    
+    // print values for debugging
+    Serial.print("pend_angle: ");
+    Serial.print(pend_angle);
+    Serial.print(",");
+    Serial.print("cart_position: ");
+    Serial.print(cart_position);
+    Serial.print(",");
+    //Serial.print("pwm_output: ");
+    //Serial.println(pwm_output);
+    Serial.print(",");
     enc_read();
     calculate_cart_velocity();
     calculate_pend_velocity();
@@ -97,7 +96,7 @@ void loop() {
     //Serial.print(cart_vel_in_centimeter_per_second);
     //Serial.print(",");
 
-    Serial.println(pend_output);
+    Serial.println(pwm_output);
     //delay(100);
 
 

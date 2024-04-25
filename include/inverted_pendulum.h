@@ -73,7 +73,7 @@ void mode_selection();
 void encoder_update();
 void calculate_cart_velocity();
 void calculate_pend_velocity();
-void calcutale_setpoint_for_pend_balance();
+void calculate_setpoint_for_pend_balance();
 
 
 // parameters for PID balancing controllers
@@ -87,18 +87,21 @@ double pend_kp = 4.32;
 double pend_ki = 43.2;
 double pend_kd = 0.108;
 double pend_setpoint = 0;
-//pwm signal for the motor
 double pend_output = 0;
+//pwm signal for the motor
+double pwm_output = 0;
 // parameters for PD swing-up controllers
-double pend_kp_swingup = 0;
-double pend_kd_swingup = 0;
+double pend_kp_swingup = 2;
+double pend_kd_swingup = 0.75;
 double cart_kp_swingup = 0;
 double cart_kd_swingup = 0;
 double cart_setpoint_swingup = 0;
-double pend_setpoint_swingup = 0;
+double pend_setpoint_swingup = 455 ;
+double pend_output_swingup = 0;
 
 // velocity and position of the pendulum
 double pend_angle = 0;
+double opposite_pend_angle = 0;
 double pend_angle_in_degree = 0;
 double pend_vel = 0;
 double pend_vel_in_degree_per_second = 0;
@@ -141,9 +144,9 @@ Encoder Enc_pend(1, pin_pend_enc1,pin_pend_enc2, INTERRUPT_MODE);
 PID PID_cart_balance(&cart_position, &cart_output, &cart_setpoint, cart_kp, cart_ki, cart_kd, P_ON_E, DIRECT);
 PID PID_pend_balance(&pend_angle, &pend_output, &pend_setpoint, pend_kp, pend_ki, pend_kd, P_ON_E, DIRECT); 
 
-//PID initialize for swingup control
-PID PID_pend_swingup(&pend_angle, &cart_setpoint_swingup, &pend_setpoint_swingup, pend_kp_swingup, 0, pend_kd_swingup, P_ON_E, DIRECT);
-PID PID_cart_swingup(&cart_position, &pend_output, &cart_setpoint_swingup, cart_kp_swingup, 0, cart_kd_swingup, P_ON_E, DIRECT);
+//PID initialize for PD swing-up control
+PID PID_pend_swingup(&opposite_pend_angle, &cart_setpoint_swingup, &pend_setpoint_swingup, pend_kp_swingup, 0, pend_kd_swingup, P_ON_E, DIRECT);
+PID PID_cart_swingup(&cart_position, &pend_output_swingup, &cart_setpoint_swingup, cart_kp_swingup, 0, cart_kd_swingup, P_ON_E, REVERSE);
 
 
 
@@ -196,7 +199,7 @@ void swingup_control_basic(){
 void balance_control(){
     //PID_cart_balance.SetTunings(cart_kp,cart_ki,cart_kd);
     PID_cart_balance.Compute();
-    calcutale_setpoint_for_pend_balance();
+    calculate_setpoint_for_pend_balance();
     //PID_cart_balance.SetTunings(pend_kp,pend_ki,pend_kd);
     PID_pend_balance.Compute();
 }
@@ -245,6 +248,7 @@ void encoder_update() {
     timer=millis();
     timer_array[0]=timer;
     pend_angle=Enc_pend.read();
+    opposite_pend_angle = - pend_angle;
     pend_angle_array[0]=pend_angle;
     pend_angle_in_degree = pend_angle_array[0]/pend_enc_slots*360;
     cart_position=Enc_cart.read();
@@ -252,7 +256,7 @@ void encoder_update() {
     cart_position_in_centimeter = cart_position_array[0]/travel_slot*100;
 }
 
-void calcutale_setpoint_for_pend_balance() {
+void calculate_setpoint_for_pend_balance() {
   if (pend_angle >= 0) pend_setpoint = cart_output + pend_enc_slots/2;
   else pend_setpoint = cart_output - pend_enc_slots/2;
 }
