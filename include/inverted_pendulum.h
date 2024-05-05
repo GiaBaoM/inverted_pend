@@ -12,8 +12,6 @@
   #include "Encoder.h"
 #endif
 
-
-
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #define SAMPLE_TIME 3
 
@@ -52,13 +50,6 @@
 #define swingup_mode              2
 #define stop_mode                3
 
-
-
-#define MASS_PEND 1 // Replace 1.0 with the actual value of MASS_PEND
-#define LENGTH_PEND 1 // Replace 1.0 with the actual value of LENGTH_PEND
-#define GRAVITY 9.81 // Replace 9.81 with the actual value of GRAVITY
-#define ENERGY_CONTROL_GAIN 1.0 // Replace 1.0 with the actual value of ENERGY_CONTROL_GAIN
-
 void enc_Setup();
 void enc_read();
 bool is_controlable();
@@ -74,7 +65,7 @@ void encoder_update();
 void calculate_cart_velocity();
 void calculate_pend_velocity();
 void calculate_setpoint_for_pend_balance();
-
+void print_values();
 
 // parameters for PID balancing controllers
 double cart_kp = 0.004;
@@ -91,12 +82,12 @@ double pend_output = 0;
 //pwm signal for the motor
 double pwm_output = 0;
 // parameters for PD swing-up controllers
-double pend_kp_swingup = 2;
-double pend_kd_swingup = 0.75;
-double cart_kp_swingup = 0;
-double cart_kd_swingup = 0;
+double pend_kp_swingup = 8;
+double pend_kd_swingup = 1;
+double cart_kp_swingup = 0.05;
+double cart_kd_swingup = 0.03;
 double cart_setpoint_swingup = 0;
-double pend_setpoint_swingup = 455 ;
+double pend_setpoint_swingup = 0;
 double pend_output_swingup = 0;
 
 // velocity and position of the pendulum
@@ -113,20 +104,12 @@ double cart_vel_in_centimeter_per_second = 0;
 
 //control mode:balance, swingup, stop
 uint8_t control_mode = 0;
-
-
-
-//variebles for the calculation of the velocity
+//variables for the calculation of the velocity
 double timer;
 const int array_length = 50;
 double cart_position_array[array_length];
 double pend_angle_array[array_length];
 double timer_array[array_length];
-
-
-
-const double MAX_CONTROL_FORCE = 255; // Replace 255 with the desired maximum control force value
-
 
 // Encoder intialize
 #ifdef USE_ENCODER_h_LIB
@@ -185,14 +168,15 @@ void go_stop() {
   analogWrite(pin_motor_right,0);
 }
 void swingup_control_PD() {
-  go_stop();
+  PID_pend_swingup.Compute();
+  PID_cart_swingup.Compute();
 }
 void swingup_control_basic(){
   calculate_pend_velocity();
-  for (int i = 0; i < 60; i++){
-  pend_output = (pend_vel_in_degree_per_second >0)? 60:-60;
+  pend_output_swingup = (pend_vel_in_degree_per_second >0)? 63:-63;
+  for (int i = 0; i < 300; i++){
   if (is_controlable()) break;
-  delay(5);
+  delay(1);
   }
 };
 
@@ -216,7 +200,7 @@ void mode_selection(){
 }
 void motor_control(int16_t pwm_value) {
   if(pwm_value > 0) {go_left(pwm_value);}
-  else if (pwm_value < 0) {go_right(abs(pwm_value));} //pwm_value *= -1;} // needed for write plot 
+  else if (pwm_value < 0) {go_right(abs(pwm_value));}
   else {go_stop();}
 }
 
@@ -271,4 +255,35 @@ void calculate_pend_velocity() {
   pend_vel = (pend_angle_array[0]-pend_angle_array[array_length-1])/(timer_array[0]-timer_array[array_length-1])*1000;
   pend_vel_in_degree_per_second = pend_vel/pend_enc_slots*360;
 }
-
+void print_values(){
+    // Serial.print(pend_angle);
+    // Serial.print(",");
+    // Serial.print(cart_position);
+    // Serial.print(",");
+    //Serial.print(opposite_pend_angle);
+    //Serial.print(",");
+    //Serial.print(pend_setpoint/pend_enc_slots*360); // pendsetpoint in degree
+    //Serial.print(",");
+    Serial.print(pend_angle_in_degree);
+    Serial.print(",");
+    //Serial.print(control_mode);
+    //Serial.print(",");
+    //Serial.print(pend_vel_in_degree_per_second);
+    //Serial.print(",");
+    Serial.println(cart_position_in_centimeter);
+    //Serial.println(",");
+    //Serial.print(cart_vel_in_centimeter_per_second);
+    //Serial.print(",");
+    //Serial.println(pwm_output);
+}
+void print_values_labview(){
+    Serial.print("a");
+    Serial.print(pend_angle_in_degree);
+    Serial.print("b");
+    Serial.print(pend_vel_in_degree_per_second);
+    Serial.print("c");
+    Serial.print(cart_position_in_centimeter);
+    Serial.print("d");
+    Serial.print(cart_vel_in_centimeter_per_second);
+    Serial.print("e");
+}
